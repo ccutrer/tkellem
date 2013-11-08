@@ -136,8 +136,9 @@ module BouncerConnection
     self.caps.merge(caps)
   end
 
-  register_cap 'tls'
+  register_cap 'multi-prefix'
   register_cap 'sasl'
+  register_cap 'tls'
 
   def self.sasl_mechanisms
     @sasl_mechanisms ||= {}
@@ -363,9 +364,17 @@ module BouncerConnection
 
   def send_msg(msg)
     trace "to client: #{msg}"
-    if !tags && msg.is_a?(IrcMessage) && !msg.tags.empty?
-      msg = msg.dup
-      msg.tags = {}
+    if msg.is_a?(IrcMessage)
+      if !tags && !msg.tags.empty?
+        msg = msg.dup
+        msg.tags = {}
+      end
+      if (msg.command == '352' || msg.command == '353') &&
+          !caps.include?('multi-prefix') &&
+          msg.args.any? { |a| a.include?('@+') }
+        msg = msg.dup
+        msg.args = msg.args.map { |a| a.gsub('@+', '@') }
+      end
     end
     send_data("#{msg}\r\n")
   end

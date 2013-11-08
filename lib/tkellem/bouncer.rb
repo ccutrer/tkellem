@@ -178,6 +178,9 @@ class Bouncer
       @awaiting_replies['WHO'] || true
     when '315'
       @awaiting_replies.delete('WHO') || true
+    when 'CAP'
+      # we don't really care if our request succeeded or not
+      false
     else
       true
     end
@@ -220,9 +223,11 @@ class Bouncer
 
   def connection_established(conn)
     @conn = conn
+    send_msg("CAP REQ :multi-prefix")
     # TODO: support sending a real username, realname, etc
     send_msg("USER #{@user.username} somehost tkellem :#{@user.name}@tkellem")
     change_nick(@nick, true)
+    send_msg("CAP END")
     @connected_at = Time.now
   end
 
