@@ -93,7 +93,7 @@ class Bouncer
     when 'NICK'
       @nick = msg.args.last
       true
-    when 'WHO'
+    when 'NAMES', 'WHO'
       client
     else
       true
@@ -178,6 +178,10 @@ class Bouncer
       @awaiting_replies['WHO'] || true
     when '315'
       @awaiting_replies.delete('WHO') || true
+    when '353'
+      @awaiting_replies['NAMES'] || true
+    when '366'
+      @awaiting_replies.delete('NAMES') || true
     when 'CAP'
       # we don't really care if our request succeeded or not
       false

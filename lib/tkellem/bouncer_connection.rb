@@ -355,9 +355,12 @@ module BouncerConnection
 
   def simulate_join(room)
     send_msg(":#{nick} JOIN #{room.name}")
-    # TODO: intercept the NAMES response so that only this bouncer gets it
-    # Otherwise other clients might show an "in this room" line.
-    @bouncer.send_msg("NAMES #{room.name}\r\n")
+    msg = IrcMessage.new
+    msg.command = 'NAMES'
+    msg.args << room.name
+    # we pretend the client sent it so that the bouncer can track and only send NAMES replies
+    # to this client
+    @bouncer.client_msg(self, msg)
     send_msg(IrcMessage.new(":tkellem", "332",  [nick, room.name, room.topic])) if room.topic
     send_msg(IrcMessage.new(":tkellem", "333",  [nick, room.name, room.topic_setter, room.topic_time])) if room.topic_setter && room.topic_time
   end
