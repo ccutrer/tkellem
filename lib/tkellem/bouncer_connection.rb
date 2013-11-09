@@ -136,6 +136,7 @@ module BouncerConnection
     self.caps.merge(caps)
   end
 
+  register_cap 'batch'
   register_cap 'multi-prefix'
   register_cap 'sasl'
   register_cap 'tls'
@@ -378,6 +379,7 @@ module BouncerConnection
         msg = msg.dup
         msg.args = msg.args.map { |a| a.gsub('@+', '@') }
       end
+      return if msg.command == 'BATCH' && !caps.include?('batch')
     end
     send_data("#{msg}\r\n")
   end
