@@ -136,7 +136,10 @@ module BouncerConnection
     self.caps.merge(caps)
   end
 
+  register_cap 'account-notify'
+  register_cap 'away-notify'
   register_cap 'batch'
+  register_cap 'extended-join'
   register_cap 'multi-prefix'
   register_cap 'sasl'
   register_cap 'tls'
@@ -367,7 +370,6 @@ module BouncerConnection
   end
 
   def send_msg(msg)
-    trace "to client: #{msg}"
     if msg.is_a?(IrcMessage)
       if !tags && !msg.tags.empty?
         msg = msg.dup
@@ -380,7 +382,14 @@ module BouncerConnection
         msg.args = msg.args.map { |a| a.gsub('@+', '@') }
       end
       return if msg.command == 'BATCH' && !caps.include?('batch')
+      return if msg.command == 'ACCOUNT' && !caps.include?('account-notify')
+      return if msg.command == 'AWAY' && !caps.include?('away-notify')
+      if msg.command == 'JOIN' && msg.args.length > 2 && !caps.include?('extended-join')
+        msg = msg.dup
+        msg.args = msg.args[0..-2] + [msg.args.last]
+      end
     end
+    trace "to client: #{msg}"
     send_data("#{msg}\r\n")
   end
 

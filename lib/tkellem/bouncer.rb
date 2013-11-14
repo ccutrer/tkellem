@@ -227,8 +227,11 @@ class Bouncer
 
   def connection_established(conn)
     @conn = conn
-    send_msg("CAP REQ :multi-prefix")
+    send_msg("CAP REQ :account-notify")
+    send_msg("CAP REQ :away-notify")
     send_msg("CAP REQ :batch")
+    send_msg("CAP REQ :extended-join")
+    send_msg("CAP REQ :multi-prefix")
     # TODO: support sending a real username, realname, etc
     send_msg("USER #{@user.username} somehost tkellem :#{@user.name}@tkellem")
     change_nick(@nick, true)
