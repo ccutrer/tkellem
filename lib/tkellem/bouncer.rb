@@ -90,9 +90,6 @@ class Bouncer
       @away[client] = msg.args.last
       check_away_status
       false
-    when 'NICK'
-      @nick = msg.args.last
-      true
     when 'NAMES', 'WHO'
       client
     else
@@ -167,11 +164,19 @@ class Bouncer
       false
     when '433'
       # nick already in use, try another
-      change_nick("#{@nick}_")
-      false
+      attempted_nick = msg.args[1]
+      if attempted_nick == nick
+        @nick = "#{attempted_nick}_"
+        send_msg("NICK #{@nick}")
+        false
+      else
+        true
+      end
     when 'NICK'
-      if msg.prefix == nick
+      if msg.prefix.split('!', 2).first == nick
         @nick = msg.args.last
+        @network_user.nick = @nick
+        @network_user.save! if @network_user.changed?
       end
       true
     when '352'
@@ -234,7 +239,7 @@ class Bouncer
     send_msg("CAP REQ :multi-prefix")
     # TODO: support sending a real username, realname, etc
     send_msg("USER #{@user.username} somehost tkellem :#{@user.name}@tkellem")
-    change_nick(@nick, true)
+    send_msg("NICK #{nick}")
     send_msg("CAP END")
     @connected_at = Time.now
   end
@@ -253,12 +258,6 @@ class Bouncer
   end
 
   protected
-
-  def change_nick(new_nick, force = false)
-    return if !force && new_nick == @nick
-    @nick = new_nick
-    send_msg("NICK #{new_nick}")
-  end
 
   def send_welcome(bouncer_conn)
     @welcomes.each { |msg| msg.args[0] = nick; bouncer_conn.send_msg(msg) }
