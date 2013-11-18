@@ -28,6 +28,7 @@ class TkellemServer
   def initialize
     @listeners = {}
     @bouncers = {}
+    @path = path
     $tkellem_server = self
 
     unless ActiveRecord::Base.connected?
@@ -97,7 +98,7 @@ class TkellemServer
 
     key = bouncers_key(network_user)
     raise("bouncer already exists: #{key}") if @bouncers.include?(key)
-    @bouncers[key] = Bouncer.new(network_user)
+    @bouncers[key] = Bouncer.new(network_user, @path)
   end
 
   def stop_bouncer(network_user)
